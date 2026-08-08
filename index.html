@@ -286,45 +286,36 @@ body.dark .nwbar-track{background:#2d3348}
 body.dark .inv-l .shares{color:var(--text-2)}
 body.dark .nwbar-fill{background:var(--green)}
 
-/* ── Google Sync ── */
-.gsync-bar{
-  display:flex;align-items:center;gap:8px;
-  padding:10px 16px;
-  background:var(--card);
-  border-bottom:1px solid var(--border);
-  font-size:13px;
+/* ── Google Sync Icon ── */
+.gsync-icon-btn{
+  width:36px;height:36px;border-radius:10px;border:none;cursor:pointer;
+  background:var(--bg);display:flex;align-items:center;justify-content:center;
+  position:relative;font-size:18px;flex-shrink:0;
 }
-.gsync-dot{
+.gsync-icon-btn .gsync-dot{
+  position:absolute;bottom:4px;right:4px;
   width:8px;height:8px;border-radius:50%;
-  background:var(--text-3);flex-shrink:0;
+  background:var(--text-3);
+  border:1.5px solid var(--card);
 }
-.gsync-dot.connected{background:var(--green)}
-.gsync-dot.syncing{background:var(--amber);animation:pulse 1s infinite}
-.gsync-dot.error{background:var(--red)}
+.gsync-icon-btn .gsync-dot.connected{background:var(--green)}
+.gsync-icon-btn .gsync-dot.syncing{background:var(--amber);animation:pulse 1s infinite}
+.gsync-icon-btn .gsync-dot.error{background:var(--red)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-.gsync-label{flex:1;color:var(--text-2)}
-.gsync-btn{
-  font-size:12px;font-weight:600;padding:5px 12px;border-radius:8px;border:none;cursor:pointer;
-  background:var(--primary);color:#fff;
-}
-.gsync-btn.disconnect{background:transparent;color:var(--text-2);border:1px solid var(--border)}
-body.dark .gsync-bar{background:var(--card);border-color:var(--border)}
 </style>
 </head>
 <body>
-
-<!-- ═══════════════════════════ GOOGLE SYNC BAR ═══════════════════════════ -->
-<div class="gsync-bar" id="gsync-bar">
-  <div class="gsync-dot" id="gsync-dot"></div>
-  <span class="gsync-label" id="gsync-label">Not connected to Google</span>
-  <button class="gsync-btn" id="gsync-btn" onclick="gSignIn()">Connect Google</button>
-</div>
 
 <!-- ═══════════════════════════ DASHBOARD ═══════════════════════════ -->
 <div id="view-dashboard" class="view active">
   <div class="page-top">
     <div class="page-title" id="dash-date"></div>
-    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="gsync-icon-btn" id="gsync-btn" onclick="gHandleTap()" title="Google Sync">
+        ☁️<span class="gsync-dot" id="gsync-dot"></span>
+      </button>
+      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    </div>
   </div>
 
   <div class="hero">
@@ -335,23 +326,23 @@ body.dark .gsync-bar{background:var(--card);border-color:var(--border)}
 
   <div class="card card-pad">
     <div class="card-title">Net Worth</div>
-    <div style="font-size:32px;font-weight:800;letter-spacing:-1px">$600,606.21</div>
+    <div style="font-size:32px;font-weight:800;letter-spacing:-1px" id="dash-nw-total">$607,889.63</div>
     <div class="nwbar">
       <div class="nwbar-labels">
-        <span style="color:var(--green);font-weight:500">Assets $602,686</span>
-        <span style="color:var(--red);font-weight:500">Debt $2,473</span>
+        <span style="color:var(--green);font-weight:500" id="dash-nw-assets">Assets $607,986</span>
+        <span style="color:var(--red);font-weight:500" id="dash-nw-debt">Debt $96</span>
       </div>
-      <div class="nwbar-track"><div class="nwbar-fill" style="width:99.6%"></div></div>
+      <div class="nwbar-track"><div class="nwbar-fill" id="dash-nw-bar" style="width:99.9%"></div></div>
     </div>
   </div>
 
   <div class="card card-pad">
     <div class="card-title">Accounts</div>
-    <div class="row"><span class="row-label">Chequing</span><span class="row-val">$22,188.65</span></div>
-    <div class="row"><span class="row-label">USD Cash</span><span class="row-val">$1,162.47</span></div>
-    <div class="row"><span class="row-label">Investments</span><span class="row-val">$584,244.16</span></div>
+    <div class="row"><span class="row-label">Chequing</span><span class="row-val" id="dash-chequing">$22,188.65</span></div>
+    <div class="row"><span class="row-label">USD Cash</span><span class="row-val" id="dash-usd">$1,162.47</span></div>
+    <div class="row"><span class="row-label">Investments</span><span class="row-val" id="dash-investments">$584,244.16</span></div>
     <div class="row invrow-tap" style="cursor:pointer" onclick="editCashBack()"><span class="row-label">Cash Back</span><span class="row-val" id="dash-cashback-val">$235.37</span></div>
-    <div class="row"><span class="row-label" style="color:var(--red)">Credit Card</span><span class="row-val" style="color:var(--red)">($96.07)</span></div>
+    <div class="row"><span class="row-label" style="color:var(--red)">Credit Card</span><span class="row-val" style="color:var(--red)" id="dash-cc">($96.07)</span></div>
   </div>
 
   <div class="card card-pad" id="dash-ctbm"></div>
@@ -966,7 +957,34 @@ function renderCostToBeMe(){
 // ════════════════════════════════════════
 function renderDashboard(){
   $('dash-date').textContent = fmtFullDate(new Date().toISOString().split('T')[0]);
-  $('dash-cashback-val').textContent = fmt(cashBack);
+
+  // ── Account balances — use live dashData if available, else fall back to hardcoded ──
+  const chequing    = dashData['Chequing']         || 22188.65;
+  const usdCash     = dashData['USD Cash']          || 1162.47;
+  const investments = INVESTMENTS.reduce((s,i)=>s+i.value, 0);
+  const creditCard  = dashData['Credit Card']       || 96.07;
+  const readyToAssign = dashData['Ready to Assign'] || 0;
+  if(!cashBack || cashBack === 235.37){
+    const sheetCB = dashData['Cash Back Dollars'];
+    if(sheetCB && sheetCB > 0){ cashBack = sheetCB; try{ localStorage.setItem('fin26_cashback', sheetCB); }catch(e){} }
+  }
+
+  $('dash-chequing').textContent    = fmt(chequing);
+  $('dash-usd').textContent         = fmt(usdCash);
+  $('dash-investments').textContent = fmt(investments);
+  $('dash-cashback-val').textContent= fmt(cashBack);
+  $('dash-cc').textContent          = '(' + fmt(creditCard) + ')';
+
+  // ── Net Worth ──
+  const assets  = chequing + usdCash + investments + cashBack;
+  const netWorth = assets - creditCard;
+  const debtPct  = Math.min(creditCard / assets * 100, 100).toFixed(1);
+  const assetPct = (100 - parseFloat(debtPct)).toFixed(1);
+  $('dash-nw-total').textContent   = fmt(netWorth);
+  $('dash-nw-assets').textContent  = 'Assets ' + fmt(assets).replace('.00','');
+  $('dash-nw-debt').textContent    = 'Debt ' + fmt(creditCard).replace('.00','');
+  $('dash-nw-bar').style.width     = assetPct + '%';
+
   renderCostToBeMe();
 
   const _now = new Date(); const _ym = _now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');
@@ -1449,18 +1467,22 @@ function gClearToken(){
 }
 
 // ── UI state ──
+let gCurrentState = '';
 function gSetStatus(state, msg){
-  const dot = $('gsync-dot'), lbl = $('gsync-label'), btn = $('gsync-btn');
-  dot.className = 'gsync-dot' + (state ? ' ' + state : '');
-  lbl.textContent = msg;
-  if(state === 'connected'){
-    btn.textContent = 'Disconnect';
-    btn.className = 'gsync-btn disconnect';
-    btn.onclick = gSignOut;
+  gCurrentState = state;
+  $('gsync-dot').className = 'gsync-dot' + (state ? ' ' + state : '');
+}
+
+// ── Tap handler — connect if not connected, offer options if connected ──
+function gHandleTap(){
+  if(gCurrentState === 'connected'){
+    const action = confirm('Google Sheets\n\nTap OK to sync now, or Cancel to disconnect.');
+    if(action){ gSetStatus('syncing',''); gSyncAll(); }
+    else { gSignOut(); }
+  } else if(gCurrentState === 'syncing'){
+    // do nothing while syncing
   } else {
-    btn.textContent = 'Connect Google';
-    btn.className = 'gsync-btn';
-    btn.onclick = gSignIn;
+    gSignIn();
   }
 }
 
@@ -1492,6 +1514,7 @@ function gSignOut(){
 // ── Master sync ──
 async function gSyncAll(){
   try {
+    await gPullDashboard();
     await gPullPrices();
     await gPullTxns();
     gSetStatus('connected','Synced with Google Sheets');
@@ -1500,10 +1523,7 @@ async function gSyncAll(){
     renderTxns();
   } catch(e){
     console.error('Sync error', e);
-    gSetStatus('error','Sync failed — tap to retry');
-    $('gsync-btn').textContent = 'Retry';
-    $('gsync-btn').className = 'gsync-btn';
-    $('gsync-btn').onclick = gSyncAll;
+    gSetStatus('error','');
   }
 }
 
@@ -1539,16 +1559,33 @@ async function gPullPrices(){
     const value  = cleanNum(row[3]);
 
     if(inv.price !== null){
-      // Price-based holding — update price and shares
+      // Price-based holding — update shares and price for display,
+      // but always trust column D for the total value (handles USD→CAD conversions)
       if(price !== null && price > 0) inv.price = price;
       if(shares !== null && shares > 0) inv.shares = shares;
-      if(inv.price > 0 && inv.shares > 0) inv.value = +(inv.shares * inv.price).toFixed(2);
-      else if(value !== null && value > 0) inv.value = value;
+      if(value !== null && value > 0) inv.value = value;
+      else if(inv.price > 0 && inv.shares > 0) inv.value = +(inv.shares * inv.price).toFixed(2);
     } else {
       // Direct value holding (Work RRSP, Cash Uninvested)
       if(value !== null && value > 0) inv.value = value;
     }
   }
+}
+
+// ── Pull dashboard account balances from Dashboard sheet ──
+// Expects rows: Chequing, USD Cash, Investments, Total, (blank), Credit Card, Net Worth, Ready to Assign, Cash Back Dollars
+let dashData = {};
+async function gPullDashboard(){
+  const range = encodeURIComponent('Dashboard!A1:B20');
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${G_SHEET_ID}/values/${range}?valueRenderOption=UNFORMATTED_VALUE`;
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + gToken } });
+  if(!res.ok) throw new Error('Dashboard fetch failed: ' + res.status);
+  const data = await res.json();
+  const rows = data.values || [];
+  dashData = {};
+  rows.forEach(r => {
+    if(r[0] && r[1] !== undefined) dashData[r[0].trim()] = parseFloat(r[1]) || 0;
+  });
 }
 
 // ── Pull transactions from Transaction Log (to catch any added in Sheets) ──
@@ -1626,9 +1663,7 @@ async function gPushTxn(t){
       try {
         await gSyncAll();
       } catch(e){
-        gSetStatus('error','Could not reconnect — tap to retry');
-        $('gsync-btn').textContent = 'Retry';
-        $('gsync-btn').onclick = gSignIn;
+        gSetStatus('error','');
       }
     }, 500);
   }

@@ -1050,16 +1050,15 @@ function renderCostToBeMe(){
 function calcRTA(chequing, creditCard, monthKey){
   const data = BUDGET[monthKey];
   if(!data) return chequing - creditCard;
-  const activityMap = calcActivityForMonth(monthKey);
-  let totalAvailable = 0;
+  // RTA = Chequing - Credit Card - total assigned
+  // Spending reduces Available within a category but does not affect RTA
+  let totalAssigned = 0;
   data.groups.forEach(g => {
     g.cats.forEach(c => {
-      const activity = activityMap[c.name] || 0;
-      const avail = c.assigned - activity;
-      totalAvailable += avail;
+      totalAssigned += c.assigned;
     });
   });
-  return +(chequing - creditCard - totalAvailable).toFixed(2);
+  return +(chequing - creditCard - totalAssigned).toFixed(2);
 }
 
 let rtaInputs = {}; // category name -> input element

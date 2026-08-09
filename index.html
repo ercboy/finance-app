@@ -89,6 +89,26 @@ body{
 .hero-label{font-size:12px;opacity:.8;font-weight:500;margin-bottom:4px}
 .hero-val{font-size:38px;font-weight:800;letter-spacing:-1.5px;line-height:1}
 .hero-sub{font-size:13px;opacity:.75;margin-top:6px}
+.hero-tap{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hero-tap:active{opacity:.85}
+
+/* ── RTA Allocate Sheet ── */
+.rta-grp-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-3);padding:14px 0 6px}
+.rta-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.rta-row:last-child{border-bottom:none}
+.rta-left{flex:1;min-width:0}
+.rta-name{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rta-avail{font-size:12px;color:var(--text-2);margin-top:1px}
+.rta-avail.neg{color:var(--red)}
+.rta-input-wrap{position:relative;flex-shrink:0;width:90px}
+.rta-dollar{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text-2);pointer-events:none}
+.rta-input{width:100%;padding:7px 8px 7px 18px;border-radius:8px;border:1.5px solid var(--border);font-size:14px;background:var(--bg);color:var(--text);text-align:right}
+.rta-input:focus{outline:none;border-color:var(--primary)}
+.rta-summary{background:var(--bg);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.rta-summary-val{font-size:20px;font-weight:800;letter-spacing:-0.5px}
+.rta-summary-val.neg{color:var(--red)}
+.rta-summary-lbl{font-size:12px;color:var(--text-2);margin-top:2px}
+body.dark .rta-input{background:var(--card);border-color:var(--border)}
 
 /* ── Progress bar ── */
 .bar-wrap{background:#f0f2f5;border-radius:6px;height:5px;margin-top:5px;overflow:hidden}
@@ -318,10 +338,10 @@ body.dark .nwbar-fill{background:var(--green)}
     </div>
   </div>
 
-  <div class="hero">
+  <div class="hero hero-tap" onclick="openRTA()">
     <div class="hero-label">Ready to Assign</div>
-    <div class="hero-val">$2,826.04</div>
-    <div class="hero-sub">July 2026</div>
+    <div class="hero-val" id="dash-rta-val">$2,995.05</div>
+    <div class="hero-sub" id="dash-rta-sub">August 2026 · tap to allocate</div>
   </div>
 
   <div class="card card-pad">
@@ -476,6 +496,76 @@ body.dark .nwbar-fill{background:var(--green)}
 
     <button class="btn-primary" onclick="saveBudgetEdit()">Save Changes</button>
     <button class="btn-ghost" onclick="closeBudgetEdit()">Cancel</button>
+  </div>
+</div>
+
+<!-- RTA Allocate Sheet -->
+<div class="be-back" id="rta-back">
+  <div class="be-sheet" style="max-height:90vh">
+    <div class="be-pill"></div>
+    <div class="be-head">
+      <div class="be-ico">💰</div>
+      <div>
+        <div class="be-cat-name">Allocate Funds</div>
+        <div class="be-cat-grp" id="rta-month-label">August 2026</div>
+      </div>
+    </div>
+    <div class="rta-summary">
+      <div>
+        <div class="rta-summary-val" id="rta-remaining-val">$0.00</div>
+        <div class="rta-summary-lbl">Remaining to assign</div>
+      </div>
+      <div style="text-align:right">
+        <div class="rta-summary-val" id="rta-rta-val">$0.00</div>
+        <div class="rta-summary-lbl">Ready to Assign</div>
+      </div>
+    </div>
+    <div id="rta-cats" style="overflow-y:auto;flex:1;margin:0 -20px;padding:0 20px"></div>
+    <button class="btn-primary" style="margin-top:16px" onclick="saveRTA()">Save Allocations</button>
+    <button class="btn-ghost" onclick="closeRTA()">Cancel</button>
+  </div>
+</div>
+
+<!-- Transaction Edit Sheet -->
+<div class="be-back" id="txedit-back">
+  <div class="be-sheet">
+    <div class="be-pill"></div>
+    <div class="be-head">
+      <div class="be-ico" id="txedit-ico">💰</div>
+      <div>
+        <div class="be-cat-name" id="txedit-title">Edit Transaction</div>
+        <div class="be-cat-grp" id="txedit-meta"></div>
+      </div>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Date</label>
+      <input type="date" class="finput" id="txedit-date">
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Category</label>
+      <select class="finput" id="txedit-cat"></select>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Type</label>
+      <select class="finput" id="txedit-type">
+        <option value="out">Expense (Outflow)</option>
+        <option value="in">Income (Inflow)</option>
+      </select>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Amount ($)</label>
+      <input type="number" class="finput" id="txedit-amt" placeholder="0.00" step="0.01" min="0">
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Account</label>
+      <select class="finput" id="txedit-acc">
+        <option>Credit Card</option>
+        <option>Chequing</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="saveTxEdit()">Save Changes</button>
+    <button class="btn-ghost" style="background:var(--red-light);color:var(--red)" onclick="deleteTxEdit()">Delete Transaction</button>
+    <button class="btn-ghost" onclick="closeTxEdit()">Cancel</button>
   </div>
 </div>
 
@@ -897,7 +987,7 @@ function fmtShortDate(dateStr){
 function fmtFullDate(dateStr){
   const parts = dateStr.split('-');
   const d = new Date(+parts[0], +parts[1]-1, +parts[2]);
-  return d.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  return d.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'});
 }
 
 // ════════════════════════════════════════
@@ -953,6 +1043,123 @@ function renderCostToBeMe(){
 }
 
 // ════════════════════════════════════════
+// READY TO ASSIGN
+// ════════════════════════════════════════
+function calcRTA(chequing, creditCard, monthKey){
+  const data = BUDGET[monthKey];
+  if(!data) return chequing - creditCard;
+  const activityMap = calcActivityForMonth(monthKey);
+  let totalAvailable = 0;
+  data.groups.forEach(g => {
+    g.cats.forEach(c => {
+      const activity = activityMap[c.name] || 0;
+      const avail = c.assigned - activity;
+      totalAvailable += avail;
+    });
+  });
+  return +(chequing - creditCard - totalAvailable).toFixed(2);
+}
+
+let rtaInputs = {}; // category name -> input element
+
+function openRTA(){
+  const monthKey = detectCurrentBudgetMonth();
+  const chequing  = dashData['Chequing']   || 22188.65;
+  const creditCard = dashData['Credit Card'] || 96.07;
+  const rta = calcRTA(chequing, creditCard, monthKey);
+  const label = MONTH_META[monthKey] ? MONTH_META[monthKey].label : monthKey;
+
+  $('rta-month-label').textContent = label;
+  $('rta-rta-val').textContent = fmt(rta);
+  $('rta-rta-val').className = 'rta-summary-val' + (rta < 0 ? ' neg' : '');
+
+  // Build category list — only groups Bills, Needs, Wants (skip Cash & Investing)
+  const SHOW_GROUPS = ['Bills','Needs','Wants'];
+  const data = BUDGET[monthKey];
+  const activityMap = calcActivityForMonth(monthKey);
+  rtaInputs = {};
+  let h = '';
+
+  data.groups.forEach(g => {
+    if(!SHOW_GROUPS.includes(g.name)) return;
+    h += `<div class="rta-grp-hdr">${g.name}</div>`;
+    g.cats.forEach(c => {
+      const activity = activityMap[c.name] || 0;
+      const avail = +(c.assigned - activity).toFixed(2);
+      const availCls = avail < 0 ? 'neg' : '';
+      h += `<div class="rta-row">
+        <div class="rta-left">
+          <div class="rta-name">${EMO[c.name]||'💰'} ${c.name}</div>
+          <div class="rta-avail ${availCls}">Available ${avail < 0 ? '-' : ''}${fmt(avail)}</div>
+        </div>
+        <div class="rta-input-wrap">
+          <span class="rta-dollar">$</span>
+          <input type="text" inputmode="decimal" class="rta-input" id="rta-inp-${c.name.replace(/\s/g,'_')}" placeholder="0.00" oninput="updateRTARemaining()">
+        </div>
+      </div>`;
+    });
+  });
+
+  $('rta-cats').innerHTML = h;
+  updateRTARemaining();
+  $('rta-back').classList.add('open');
+}
+
+function updateRTARemaining(){
+  const chequing   = dashData['Chequing']    || 22188.65;
+  const creditCard = dashData['Credit Card'] || 96.07;
+  const monthKey   = detectCurrentBudgetMonth();
+  const rta        = calcRTA(chequing, creditCard, monthKey);
+
+  // Sum all entered allocation amounts
+  let totalEntered = 0;
+  document.querySelectorAll('.rta-input').forEach(inp => {
+    totalEntered += parseFloat(inp.value) || 0;
+  });
+
+  const remaining = +(rta - totalEntered).toFixed(2);
+  $('rta-remaining-val').textContent = (remaining < 0 ? '-' : '') + fmt(remaining);
+  $('rta-remaining-val').className = 'rta-summary-val' + (remaining < 0 ? ' neg' : '');
+}
+
+function closeRTA(){ $('rta-back').classList.remove('open'); }
+
+function saveRTA(){
+  const monthKey = detectCurrentBudgetMonth();
+  const data = BUDGET[monthKey];
+  if(!data){ closeRTA(); return; }
+
+  let anyChange = false;
+  data.groups.forEach(g => {
+    g.cats.forEach(c => {
+      const inp = document.getElementById('rta-inp-' + c.name.replace(/\s/g,'_'));
+      if(!inp) return;
+      const add = parseFloat(inp.value) || 0;
+      if(add !== 0){
+        c.assigned = +(c.assigned + add).toFixed(2);
+        anyChange = true;
+      }
+    });
+  });
+
+  if(anyChange){
+    // Persist to localStorage
+    try {
+      const sb = JSON.parse(localStorage.getItem('fin26_budget') || '{}');
+      if(!sb[monthKey]) sb[monthKey] = {};
+      data.groups.forEach(g => g.cats.forEach(c => { sb[monthKey][c.name] = c.assigned; }));
+      localStorage.setItem('fin26_budget', JSON.stringify(sb));
+    } catch(e){}
+  }
+
+  closeRTA();
+  renderDashboard();
+  if(document.getElementById('view-budget').classList.contains('active')) renderBudget();
+}
+
+$('rta-back').addEventListener('click', function(e){ if(e.target===this) closeRTA(); });
+
+// ════════════════════════════════════════
 // DASHBOARD
 // ════════════════════════════════════════
 function renderDashboard(){
@@ -963,7 +1170,14 @@ function renderDashboard(){
   const usdCash     = dashData['USD Cash']          || 1162.47;
   const investments = INVESTMENTS.reduce((s,i)=>s+i.value, 0);
   const creditCard  = dashData['Credit Card']       || 96.07;
-  const readyToAssign = dashData['Ready to Assign'] || 0;
+
+  // ── Ready to Assign: Chequing - Credit Card - sum of all Available in current budget month ──
+  const rtaMonth = detectCurrentBudgetMonth();
+  const rta = calcRTA(chequing, creditCard, rtaMonth);
+  const rtaMonthLabel = MONTH_META[rtaMonth] ? MONTH_META[rtaMonth].label : rtaMonth;
+  $('dash-rta-val').textContent = fmt(rta);
+  $('dash-rta-val').style.color = rta < 0 ? 'inherit' : 'inherit'; // always white on hero
+  $('dash-rta-sub').textContent = rtaMonthLabel + ' · tap to allocate';
   if(!cashBack || cashBack === 235.37){
     const sheetCB = dashData['Cash Back Dollars'];
     if(sheetCB && sheetCB > 0){ cashBack = sheetCB; try{ localStorage.setItem('fin26_cashback', sheetCB); }catch(e){} }
@@ -1049,14 +1263,30 @@ function detectCurrentBudgetMonth(){
   })[0];
 }
 
+function calcActivityForMonth(monthKey){
+  // Build a map of category -> total outflow for the given month from txns
+  const meta = MONTH_META[monthKey];
+  if(!meta) return {};
+  const prefix = `${meta.year}-${String(meta.month).padStart(2,'0')}`;
+  const map = {};
+  txns.forEach(t => {
+    if(t.date.startsWith(prefix) && t.outflow > 0 && t.category !== 'Payment'){
+      map[t.category] = (map[t.category] || 0) + t.outflow;
+    }
+  });
+  return map;
+}
+
 function renderBudget(){
   const data = BUDGET[budgetMonth];
+  const activityMap = calcActivityForMonth(budgetMonth);
   let h = '';
   data.groups.forEach((g, gIdx)=>{
     h += `<div class="grp-hdr">${g.name}</div><div class="card card-pad">`;
     g.cats.forEach((c, cIdx)=>{
-      const avail = +(c.assigned - c.activity).toFixed(2);
-      const pct = c.assigned>0 ? Math.min(c.activity/c.assigned*100,100) : 0;
+      const activity = +(activityMap[c.name] || 0).toFixed(2);
+      const avail = +(c.assigned - activity).toFixed(2);
+      const pct = c.assigned>0 ? Math.min(activity/c.assigned*100,100) : 0;
       const barCls = avail<0?'bar-red':pct>75?'bar-amber':'bar-green';
       const availCls = avail<0?'avail-neg':avail===0&&c.assigned>0?'avail-zero':'avail-pos';
       h += `<div class="brow" onclick="openBudgetEdit('${budgetMonth}',${gIdx},${cIdx})">
@@ -1066,7 +1296,7 @@ function renderBudget(){
         </div>
         <div class="brow-meta">
           <span>Assigned ${fmt(c.assigned)}</span>
-          <span>Spent ${fmt(c.activity)}</span>
+          <span>Spent ${fmt(activity)}</span>
         </div>
         ${c.assigned>0?`<div class="bar-wrap"><div class="bar ${barCls}" style="width:${pct}%"></div></div>`:''}
       </div>`;
@@ -1097,7 +1327,9 @@ function openBudgetEdit(month, gIdx, cIdx){
 function renderBeStats(assigned){
   if(!beState) return;
   const c = beState.cat;
-  const avail = +(assigned - c.activity).toFixed(2);
+  const activityMap = calcActivityForMonth(beState.month);
+  const activity = +(activityMap[c.name] || 0).toFixed(2);
+  const avail = +(assigned - activity).toFixed(2);
   const ac = avail<0?'color:var(--red)':avail===0?'color:var(--text-2)':'color:var(--green)';
   $('be-stats').innerHTML = `
     <div class="be-stat">
@@ -1105,7 +1337,7 @@ function renderBeStats(assigned){
       <div class="be-stat-lbl">Assigned</div>
     </div>
     <div class="be-stat">
-      <div class="be-stat-val">${fmt(c.activity)}</div>
+      <div class="be-stat-val">${fmt(activity)}</div>
       <div class="be-stat-lbl">Spent</div>
     </div>
     <div class="be-stat">
@@ -1124,7 +1356,9 @@ function adjBudget(delta){
 function updateBePreview(){
   if(!beState) return;
   const newAmt = parseFloat($('be-input').value) || 0;
-  const avail = +(newAmt - beState.cat.activity).toFixed(2);
+  const activityMap = calcActivityForMonth(beState.month);
+  const activity = +(activityMap[beState.cat.name] || 0).toFixed(2);
+  const avail = +(newAmt - activity).toFixed(2);
   const cls = avail<0?'neg':avail===0?'zero':'pos';
   const sign = avail<0?'-':'';
   const prev = $('be-preview');
@@ -1188,13 +1422,15 @@ function renderTxns(){
 
   let h='', lastDate='';
   list.forEach(t=>{
+    // Find the real index in the txns array for editing
+    const realIdx = txns.indexOf(t);
     if(t.date!==lastDate){
       h+=`<div class="tx-date-hdr">${fmtShortDate(t.date)}</div>`;
       lastDate=t.date;
     }
     const isIn = t.inflow>0;
     const amt = isIn?t.inflow:t.outflow;
-    h+=`<div class="txrow">
+    h+=`<div class="txrow invrow-tap" style="cursor:pointer" onclick="openTxEdit(${realIdx})">
       <div class="txicon">${EMO[t.category]||'💰'}</div>
       <div class="txinfo">
         <div class="txcat">${t.category}</div>
@@ -1307,6 +1543,124 @@ function addTxn(){
 }
 
 $('mback').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+
+// ════════════════════════════════════════
+// TRANSACTION EDIT / DELETE
+// ════════════════════════════════════════
+let txEditIdx = null;
+
+function openTxEdit(idx){
+  const t = txns[idx];
+  if(!t) return;
+  txEditIdx = idx;
+
+  // Populate category dropdown
+  $('txedit-cat').innerHTML = CATS.map(c=>`<option${c===t.category?' selected':''}>${c}</option>`).join('');
+
+  $('txedit-ico').textContent = EMO[t.category] || '💰';
+  $('txedit-title').textContent = t.category;
+  $('txedit-meta').textContent = fmtShortDate(t.date) + ' · ' + t.account;
+  $('txedit-date').value = t.date;
+  $('txedit-type').value = t.inflow > 0 ? 'in' : 'out';
+  $('txedit-amt').value = t.inflow > 0 ? t.inflow : t.outflow;
+  $('txedit-acc').value = t.account;
+  $('txedit-back').classList.add('open');
+}
+
+function closeTxEdit(){ $('txedit-back').classList.remove('open'); txEditIdx = null; }
+
+function saveTxEdit(){
+  if(txEditIdx === null) return;
+  const date     = $('txedit-date').value;
+  const category = $('txedit-cat').value;
+  const type     = $('txedit-type').value;
+  const amount   = parseFloat($('txedit-amt').value);
+  const account  = $('txedit-acc').value;
+  if(!date || !amount || isNaN(amount) || amount <= 0){ alert('Please fill in all fields.'); return; }
+
+  const original = { ...txns[txEditIdx] };
+  const updated = { ...original, date, category, outflow: type==='out'?amount:0, inflow: type==='in'?amount:0, account };
+  txns[txEditIdx] = updated;
+  persistTxns();
+
+  // Push update to Sheets — delete old row then append updated
+  if(gToken && gTokenExp > Date.now()){
+    gSetStatus('syncing','');
+    gDeleteTxnFromSheet(original).then(()=> gPushTxn(updated)).then(()=> gSetStatus('connected','')).catch(()=> gSetStatus('error',''));
+  }
+
+  closeTxEdit();
+  renderTxns();
+  renderDashboard();
+  renderBudget();
+}
+
+function deleteTxEdit(){
+  if(txEditIdx === null) return;
+  if(!confirm('Delete this transaction?')) return;
+  const t = txns[txEditIdx];
+
+  // Mark as deleted and remove from array
+  txns.splice(txEditIdx, 1);
+  persistTxns();
+
+  // Delete from Sheets if connected
+  if(gToken && gTokenExp > Date.now()){
+    gSetStatus('syncing','');
+    gDeleteTxnFromSheet(t).then(()=> gSetStatus('connected','')).catch(()=> gSetStatus('error',''));
+  }
+
+  closeTxEdit();
+  renderTxns();
+  renderDashboard();
+  renderBudget();
+}
+
+function persistTxns(){
+  try {
+    // Save only _new transactions to localStorage (sheet-sourced ones are re-pulled on sync)
+    const toSave = txns.filter(t => t._new);
+    localStorage.setItem('fin26_txns', JSON.stringify(toSave));
+  } catch(e){}
+}
+
+// ── Find and delete a row in the Transaction Log sheet, then re-append if updating ──
+async function gDeleteTxnFromSheet(t){
+  await gEnsureToken();
+  // Find the row by fetching all rows and matching date+category+amount
+  const range = encodeURIComponent('Transaction Log!A:E');
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${G_SHEET_ID}/values/${range}?valueRenderOption=UNFORMATTED_VALUE`;
+  const res = await fetch(url, { headers:{ Authorization:'Bearer '+gToken } });
+  if(!res.ok) throw new Error('fetch failed');
+  const data = await res.json();
+  const rows = data.values || [];
+
+  // Find matching row index (1-based, row 1 is header so data starts at row 2)
+  const dp = t.date.split('-');
+  const dateStr = `${parseInt(dp[1])}/${parseInt(dp[2])}/${dp[0]}`;
+  let rowNum = -1;
+  for(let i=1; i<rows.length; i++){
+    const r = rows[i];
+    const rDate = String(r[0]||'').trim();
+    const rCat  = String(r[1]||'').trim();
+    const rAmt  = parseFloat(r[2])||0;
+    const rIn   = parseFloat(r[3])||0;
+    // Match on date serial or formatted, category, and amount
+    const dateMatch = rDate === dateStr || parseInt(rDate) === Math.round((new Date(t.date).getTime()/86400000)+25569);
+    if(dateMatch && rCat === t.category && (Math.abs(rAmt - t.outflow)<0.01 || Math.abs(rIn - t.inflow)<0.01)){
+      rowNum = i + 2; // +1 for header, +1 for 1-based
+      break;
+    }
+  }
+
+  if(rowNum < 0) return; // row not found in sheet — nothing to delete
+
+  // Clear the row (Sheets API doesn't truly delete rows easily, so we clear it)
+  const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${G_SHEET_ID}/values/Transaction%20Log!A${rowNum}:E${rowNum}:clear`;
+  await fetch(clearUrl, { method:'POST', headers:{ Authorization:'Bearer '+gToken,'Content-Type':'application/json' } });
+}
+
+$('txedit-back').addEventListener('click', function(e){ if(e.target===this) closeTxEdit(); });
 
 // ════════════════════════════════════════
 // GENERIC VALUE EDITOR (reusable single-dollar input)
@@ -1514,6 +1868,7 @@ function gSignOut(){
 // ── Master sync ──
 async function gSyncAll(){
   try {
+    await gEnsureToken();
     await gPullDashboard();
     await gPullPrices();
     await gPullTxns();
@@ -1638,11 +1993,39 @@ async function gPullTxns(){
 }
 
 // ── Push a new transaction to the sheet ──
+// ── Ensure we have a valid token, refreshing silently if needed ──
+function gEnsureToken(){
+  return new Promise((resolve, reject) => {
+    // Token still valid
+    if(gToken && gTokenExp > Date.now() + 30000){ resolve(); return; }
+    // Need a fresh token — request silently (no popup if user already consented)
+    if(!gTokenClient){
+      gTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: G_CLIENT_ID,
+        scope: G_SCOPES,
+        prompt: '',
+        callback: (resp) => {
+          if(resp.error){ reject(new Error(resp.error)); return; }
+          gSaveToken(resp.access_token, resp.expires_in);
+          resolve();
+        }
+      });
+    } else {
+      gTokenClient.callback = (resp) => {
+        if(resp.error){ reject(new Error(resp.error)); return; }
+        gSaveToken(resp.access_token, resp.expires_in);
+        resolve();
+      };
+    }
+    gTokenClient.requestAccessToken({ prompt: '' });
+  });
+}
+
 async function gPushTxn(t){
-  if(!gToken || gTokenExp < Date.now()) return; // not connected
+  if(!gToken && gTokenExp === 0) return; // never connected
+  try { await gEnsureToken(); } catch(e){ console.error('Token refresh failed', e); return; }
   const range = encodeURIComponent('Transaction Log!A:E');
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${G_SHEET_ID}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
-  // Format date as M/D/YYYY to match existing sheet format
   const dp = t.date.split('-');
   const dateStr = `${parseInt(dp[1])}/${parseInt(dp[2])}/${dp[0]}`;
   const body = { values: [[dateStr, t.category, t.outflow||'', t.inflow||'', t.account]] };
@@ -1651,7 +2034,7 @@ async function gPushTxn(t){
     headers:{ Authorization:'Bearer '+gToken, 'Content-Type':'application/json' },
     body: JSON.stringify(body)
   });
-  if(!res.ok){ console.error('Push txn failed', await res.text()); }
+  if(!res.ok){ console.error('Push txn failed', await res.text()); throw new Error('Push failed'); }
 }
 
 // ── Auto-restore token on load ──

@@ -1050,25 +1050,22 @@ function renderCostToBeMe(){
 function calcRTA(chequing, creditCard, monthKey){
   const data = BUDGET[monthKey];
   if(!data) return chequing - creditCard;
-  // RTA = Chequing - sum of Available (assigned - activity) - Credit Card
-  const activityMap = calcActivityForMonth(monthKey);
-  let totalAvailable = 0;
+  // RTA = Chequing - Credit Card - sum of Assigned
+  // Spending changes Activity/Available but NOT Assigned, so RTA is unaffected by expenses
+  let totalAssigned = 0;
   data.groups.forEach(g => {
-    g.cats.forEach(c => {
-      const activity = activityMap[c.name] || 0;
-      totalAvailable += c.assigned - activity;
-    });
+    g.cats.forEach(c => { totalAssigned += c.assigned; });
   });
-  return +(chequing - totalAvailable - creditCard).toFixed(2);
+  return +(chequing - creditCard - totalAssigned).toFixed(2);
 }
 
 let rtaInputs = {}; // category name -> input element
 
 function openRTA(){
   const monthKey = detectCurrentBudgetMonth();
-  const chequing  = dashData['Chequing']   || 22188.65;
-  const creditCard = dashData['Credit Card'] || 96.07;
-  const rta = calcRTA(chequing, creditCard, monthKey);
+  const chequing   = dashData['Chequing']        || 22188.65;
+  const creditCard = dashData['Credit Card']      || 96.07;
+  const rta = dashData['Ready to Assign'] !== undefined ? dashData['Ready to Assign'] : calcRTA(chequing, creditCard, monthKey);
   const label = MONTH_META[monthKey] ? MONTH_META[monthKey].label : monthKey;
 
   $('rta-month-label').textContent = label;
@@ -1111,7 +1108,7 @@ function updateRTARemaining(){
   const chequing   = dashData['Chequing']    || 22188.65;
   const creditCard = dashData['Credit Card'] || 96.07;
   const monthKey   = detectCurrentBudgetMonth();
-  const rta        = calcRTA(chequing, creditCard, monthKey);
+  const rta        = dashData['Ready to Assign'] !== undefined ? dashData['Ready to Assign'] : calcRTA(chequing, creditCard, monthKey);
 
   // Sum all entered allocation amounts
   let totalEntered = 0;
@@ -1173,12 +1170,11 @@ function renderDashboard(){
   const investments = INVESTMENTS.reduce((s,i)=>s+i.value, 0);
   const creditCard  = dashData['Credit Card']       || 96.07;
 
-  // ── Ready to Assign: Chequing - Credit Card - sum of all Available in current budget month ──
+  // ── Ready to Assign — pull directly from Dashboard sheet (source of truth) ──
   const rtaMonth = detectCurrentBudgetMonth();
-  const rta = calcRTA(chequing, creditCard, rtaMonth);
   const rtaMonthLabel = MONTH_META[rtaMonth] ? MONTH_META[rtaMonth].label : rtaMonth;
+  const rta = dashData['Ready to Assign'] !== undefined ? dashData['Ready to Assign'] : calcRTA(chequing, creditCard, rtaMonth);
   $('dash-rta-val').textContent = fmt(rta);
-  $('dash-rta-val').style.color = rta < 0 ? 'inherit' : 'inherit'; // always white on hero
   $('dash-rta-sub').textContent = rtaMonthLabel + ' · tap to allocate';
   if(!cashBack || cashBack === 235.37){
     const sheetCB = dashData['Cash Back Dollars'];

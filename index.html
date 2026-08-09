@@ -962,7 +962,7 @@ try {
 // ════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════
-let activeMonth = 'July 2026';
+let activeMonth = ''; // set dynamically on first renderTxns
 let activeCat = 'All';
 let budgetMonth = 'july'; // overwritten after detectCurrentBudgetMonth is defined
 let beState = null;
@@ -1397,11 +1397,16 @@ $('be-back').addEventListener('click', function(e){ if(e.target===this) closeBud
 // ════════════════════════════════════════
 function renderTxns(){
   // Month dropdown — newest first
+  // Sort months newest first
   const months = [...new Set(txns.map(t=>txnMonth(t.date)))].sort((a,b)=>{
     return new Date(b.split(' ').reverse().join(' ')) - new Date(a.split(' ').reverse().join(' '));
   });
-  // Default activeMonth to current month if not yet set to a valid value
-  if(!months.includes(activeMonth)) activeMonth = months[0];
+  // Default to current calendar month, fall back to most recent
+  if(!activeMonth || !months.includes(activeMonth)){
+    const now = new Date();
+    const curLabel = now.toLocaleString('en-CA',{month:'long',year:'numeric'});
+    activeMonth = months.includes(curLabel) ? curLabel : months[0];
+  }
   $('txn-month-select').innerHTML = months.map(m=>
     `<option value="${m}"${m===activeMonth?' selected':''}>${m}</option>`
   ).join('');
@@ -1529,13 +1534,13 @@ function addTxn(){
     localStorage.setItem('fin26_txns', JSON.stringify(saved));
   } catch(e){}
 
-  // Push to Google Sheets if connected
-  if(gToken && gTokenExp > Date.now()){
-    gSetStatus('syncing','Saving to Google Sheets…');
+  // Push to Google Sheets if ever connected (gEnsureToken handles refresh)
+  if(gToken !== null || gTokenExp > 0){
+    gSetStatus('syncing','');
     gPushTxn(t).then(()=>{
-      gSetStatus('connected','Synced with Google Sheets');
+      gSetStatus('connected','');
     }).catch(()=>{
-      gSetStatus('error','Saved locally — sync failed');
+      gSetStatus('error','');
     });
   }
 
@@ -1586,7 +1591,7 @@ function saveTxEdit(){
   persistTxns();
 
   // Push update to Sheets — delete old row then append updated
-  if(gToken && gTokenExp > Date.now()){
+  if(gToken !== null || gTokenExp > 0){
     gSetStatus('syncing','');
     gDeleteTxnFromSheet(original).then(()=> gPushTxn(updated)).then(()=> gSetStatus('connected','')).catch(()=> gSetStatus('error',''));
   }
@@ -1606,8 +1611,8 @@ function deleteTxEdit(){
   txns.splice(txEditIdx, 1);
   persistTxns();
 
-  // Delete from Sheets if connected
-  if(gToken && gTokenExp > Date.now()){
+  // Delete from Sheets if ever connected
+  if(gToken !== null || gTokenExp > 0){
     gSetStatus('syncing','');
     gDeleteTxnFromSheet(t).then(()=> gSetStatus('connected','')).catch(()=> gSetStatus('error',''));
   }
@@ -2025,8 +2030,7 @@ function gEnsureToken(){
 }
 
 async function gPushTxn(t){
-  if(!gToken && gTokenExp === 0) return; // never connected
-  try { await gEnsureToken(); } catch(e){ console.error('Token refresh failed', e); return; }
+  try { await gEnsureToken(); } catch(e){ console.error('Token refresh failed', e); throw e; }
   const range = encodeURIComponent('Transaction Log!A:E');
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${G_SHEET_ID}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
   const dp = t.date.split('-');

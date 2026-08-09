@@ -802,7 +802,7 @@ try {
 } catch(e){}
 
 const INVESTMENTS = [
-  {ticker:'CRM',shares:422,price:192.74,value:81336.28,type:'Stock'},
+  {ticker:'CRM',shares:422,price:192.74,value:113508.84,type:'Stock',usd:true},
   {ticker:'ATH',shares:1657.54018,price:9.91,value:16426.22,type:'Stock'},
   {ticker:'ENB',shares:139,price:71.55,value:9945.45,type:'Stock'},
   {ticker:'SU',shares:91.04358,price:83.83,value:7632.18,type:'Stock'},
@@ -821,7 +821,9 @@ try {
     if(!si[inv.ticker]) return;
     if(inv.price !== null && si[inv.ticker].shares !== undefined){
       inv.shares = si[inv.ticker].shares;
-      inv.value  = +(inv.shares * inv.price).toFixed(2);
+      // Don't recalculate value for USD-denominated tickers — use stored CAD value from sheet
+      if(!inv.usd) inv.value = +(inv.shares * inv.price).toFixed(2);
+      else if(si[inv.ticker].value !== undefined) inv.value = si[inv.ticker].value;
     } else if(inv.price === null && si[inv.ticker].value !== undefined){
       inv.value = si[inv.ticker].value;
     }
@@ -1190,7 +1192,7 @@ function renderDashboard(){
   $('dash-cc').textContent          = '(' + fmt(creditCard) + ')';
 
   // ── Net Worth ──
-  const assets  = chequing + usdCash + investments + cashBack;
+  const assets  = chequing + usdCash + investments;
   const netWorth = assets - creditCard;
   const debtPct  = Math.min(creditCard / assets * 100, 100).toFixed(1);
   const assetPct = (100 - parseFloat(debtPct)).toFixed(1);
@@ -1759,13 +1761,14 @@ function saveInvEdit(){
   if(isNaN(raw) || raw < 0){ alert('Please enter a valid amount.'); return; }
   if(inv.price !== null){
     inv.shares = raw;
-    inv.value  = +(raw * inv.price).toFixed(2);
+    // USD tickers: don't recalculate value from shares × price — sync will restore CAD value
+    if(!inv.usd) inv.value = +(raw * inv.price).toFixed(2);
   } else {
     inv.value = +raw.toFixed(2);
   }
   try {
     const si = JSON.parse(localStorage.getItem('fin26_investments') || '{}');
-    si[inv.ticker] = inv.price !== null ? {shares: raw} : {value: raw};
+    si[inv.ticker] = inv.price !== null ? {shares: raw, value: inv.value} : {value: raw};
     localStorage.setItem('fin26_investments', JSON.stringify(si));
   } catch(e){}
   closeInvEdit();
